@@ -86,10 +86,39 @@ struct editorConfig {
 
 struct editorConfig E; // Make global variable for config
 
+/*** Append buffer ***/
+/* Replace write out byte by append buffer */
+struct abuf {
+    char *b;
+    int len;
+};
+
+#define ABUF_INIT {NULL,0} // Represent constructor for append bufffer
+
+/* Append string s into struct abuf with len */
+void abAppend(struct abuf *ab, const char *s, int len) {
+    // extend location for store string append
+    // When relloc address memory in ab will destroy
+    // and create new address
+    char *new = realloc(ab->b, ab->len + len);
+    if(new == NULL) return;
+
+    memcpy(&new[ab->len],s,len);// Put string into loction mem
+    // Referent new point append
+    ab->b = new; // Add new memory
+    ab->len += len;
+}
+
+/* Free string */
+void abFree(struct abuf *ab) {
+    free(ab->b);
+}
+
 /*** prototypes ***/
 void editorSetStatusMessage(const char *fmt, ...);
 void editorRefreshScreen();
 char *editorPrompt(char *prompt, void (*callback)(char *, int));
+void convertToUnicode(struct abuf *ab, unsigned codePoint);
 
 /*** terminal ***/
 /* Error handling */
@@ -201,7 +230,7 @@ int getCursorPosition(int *rows, int *cols) {
     unsigned int i = 0;
 
     if (write(STDOUT_FILENO,"\x1b[6n",4) != 4) return -1;
-  
+
     while( i < sizeof(buf) -1 ) {
         if(read(STDIN_FILENO, &buf[i],1) != 1) break;
         if(buf[i] == 'R') break;
@@ -238,7 +267,7 @@ int editorRowCxToRx(erow *row, int cx) {
     int rx = 0;
     int j;
     for(j = 0; j < cx; j++) {
-        if(row->chars[j] == '\t') 
+        if(row->chars[j] == '\t')
             rx += (GHI_TAB_STOP - 1) - (rx % GHI_TAB_STOP);
         rx++;
     }
@@ -279,6 +308,7 @@ void editorUpdateRow(erow *row) {
             row->render[idx++]=' ';
             while(idx % GHI_TAB_STOP != 0) row->render[idx++] = ' ';
         } else {
+            // Check printable character
             row->render[idx++] = row->chars[j];
         }
     }
@@ -289,12 +319,12 @@ void editorUpdateRow(erow *row) {
 /* Insert row at with s and len of s*/
 void editorInsertRow(int at, char *s, size_t len) {
     if(at < 0 || at > E.numrows) return;
-    
+
     E.row = realloc(E.row, sizeof(erow) * (E.numrows + 1));
     // Move row contains chars from cursor to end currently into next row
     memmove(&E.row[at + 1], &E.row[at], sizeof(erow) * (E.numrows - at));
 
-    // row start at 
+    // row start at
     E.row[at].size = len;
     E.row[at].chars = malloc(len+1);
     memcpy(E.row[at].chars, s, len);
@@ -325,18 +355,42 @@ void editorDelRow(int at) {
 void editorRowInsertChar(erow *row, int at, int c) {
     if(at < 0 || at > row->size) at = row->size;
 
-    // Add 2 because add the null byte
-    row->chars = realloc(row->chars, row->size + 2);
+
+
     // Shift left from this cursor characte with the rest line characters
     // to next character index position
     // row->size - at + 1, the rest line with current character
-    memmove(&row->chars[at+1], &row->chars[at], row->size - at + 1);
-    row->size++;
+    // When append chars
+    if(row->size - at == 0 && at > 0 && row->chars[at-1] == 'e' && c == 'e') {
+        struct abuf ab = ABUF_INIT;
+        convertToUnicode(&ab,0x00EA);
+        row->chars = realloc(row->chars, row->size + ab.len);
+        // Remove previous character
+        memmove(&row->chars[at+ab.len - 1], &row->chars[at], row->size - at + 1);
+        row->size++;
 
-    row->chars[at] = c;
+        // Copy buffer to row chars inserted
+        int i;
+        at--;
+        for(i = 0; i < ab.len; i++){
+            row->chars[at + i] = ab.b[i];
+        }
+        editorUpdateRow(row);
 
-    editorUpdateRow(row);
+        abFree(&ab);
+    }else {
+        row->chars = realloc(row->chars, row->size + 2);
+        memmove(&row->chars[at+1], &row->chars[at], row->size - at + 1);
+        row->size++;
+
+        // Copy buffer to row chars inserted
+        row->chars[at] = c;
+
+
+        editorUpdateRow(row);
+    }
     E.dirty++;//Mark changed
+
 }
 
 void editorRowAppendString(erow *row, char *s, size_t len) {
@@ -417,7 +471,7 @@ char *editorRowsToString(int *buflen) {
     char *p = buf;
     for(j = 0; j < E.numrows; j++) {
         memcpy(p,E.row[j].chars, E.row[j].size);
-        p += E.row[j].size; // move pointer to next new line 
+        p += E.row[j].size; // move pointer to next new line
         *p = '\n';
         p++;
     }
@@ -458,7 +512,7 @@ void editorSave() {
 
     int len;
     char *buf = editorRowsToString(&len);
-    
+
     // Open creat a new file and Read write to a file
     int fd = open(E.filename, O_RDWR | O_CREAT, 0644);
     // 0644 si standard permissions you usally want for text file
@@ -524,7 +578,7 @@ void editorFindCallback(char *query, int key) {
 }
 
 void editorFind() {
-    
+
     // Restore cursor position
     int saved_cx = E.cx;
     int saved_cy = E.cy;
@@ -542,33 +596,6 @@ void editorFind() {
     }
 }
 
-/*** Append buffer ***/
-/* Replace write out byte by append buffer */
-struct abuf {
-    char *b;
-    int len;
-};
-
-#define ABUF_INIT {NULL,0} // Represent constructor for append bufffer
-
-/* Append string s into struct abuf with len */
-void abAppend(struct abuf *ab, const char *s, int len) {
-    // extend location for store string append
-    // When relloc address memory in ab will destroy
-    // and create new address
-    char *new = realloc(ab->b, ab->len + len);
-    if(new == NULL) return;
-
-    memcpy(&new[ab->len],s,len);// Put string into loction mem
-    // Referent new point append
-    ab->b = new; // Add new memory
-    ab->len += len;
-}
-
-/* Free string */
-void abFree(struct abuf *ab) {
-    free(ab->b);
-}
 /*** Output ***/
 
 void editorScroll() {
@@ -669,7 +696,7 @@ void editorDrawMessageBar(struct abuf *ab) {
     abAppend(ab,"\x1b[K",3); // Erase to end of line
     int msglen = strlen(E.statusmsg);
     if(msglen > E.screencols) msglen = E.screencols;
-    if(msglen && time(NULL) - E.statusmsg_time < 5) 
+    if(msglen && time(NULL) - E.statusmsg_time < 5)
         abAppend(ab,E.statusmsg, msglen);
 }
 
@@ -771,7 +798,7 @@ void editorMoveCursor(int key) {
             }
             break;
         case ARROW_RIGHT:
-            if(row && E.cx < row->size) { 
+            if(row && E.cx < row->size) {
                 E.cx++;
             } else if(row && E.cx == row->size) {// Move start next line
                 E.cy++;
@@ -824,9 +851,9 @@ void editorProcessKeypress() {
         case HOME_KEY:
             E.cx = 0;
             break;
-      
+
         case END_KEY:
-            if(E.cy < E.numrows) 
+            if(E.cy < E.numrows)
                 E.cx = E.row[E.cy].size;
             break;
         case CTRL_KEY('f'):
@@ -860,7 +887,7 @@ void editorProcessKeypress() {
         case ARROW_LEFT:
             editorMoveCursor(c);
             break;
-        
+
         case CTRL_KEY('l'):
         case '\x1b': // Escape key
             /*ToDos*/
@@ -920,7 +947,7 @@ void initEditor() {
     }
 
     E.screenrows -= 2;
-    
+
 }
 
 int main(int argc, char *argv[]) {
@@ -936,7 +963,7 @@ int main(int argc, char *argv[]) {
         editorRefreshScreen();
         editorProcessKeypress();
     }
-    
+
 
     return 0;
 }

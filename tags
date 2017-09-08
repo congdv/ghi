@@ -4,8 +4,7 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-ABUF_INIT	ghi.c	552;"	d	file:
-ABUF_INIT	test_utf_8.c	34;"	d	file:
+ABUF_INIT	ghi.c	96;"	d	file:
 ARROW_DOWN	ghi.c	/^    ARROW_DOWN ,$/;"	e	enum:editorKey	file:
 ARROW_LEFT	ghi.c	/^    ARROW_LEFT  = 1000,$/;"	e	enum:editorKey	file:
 ARROW_RIGHT	ghi.c	/^    ARROW_RIGHT,$/;"	e	enum:editorKey	file:
@@ -25,28 +24,21 @@ HOME_KEY	ghi.c	/^    HOME_KEY,$/;"	e	enum:editorKey	file:
 PAGE_DOWN	ghi.c	/^    PAGE_DOWN$/;"	e	enum:editorKey	file:
 PAGE_UP	ghi.c	/^    PAGE_UP,$/;"	e	enum:editorKey	file:
 STD	Makefile	/^STD=-std=c99$/;"	m
-VOWEL_SOUND	test_utf_8.c	15;"	d	file:
 _BSD_SOURCE	ghi.c	25;"	d	file:
 _DEFUALT_SOURCE	ghi.c	24;"	d	file:
 _GNU_SOURCE	ghi.c	26;"	d	file:
 abAppend	ghi.c	/^void abAppend(struct abuf *ab, const char *s, int len) {$/;"	f
-abAppend	test_utf_8.c	/^void abAppend(struct abuf *ab,int c) {$/;"	f
-abAppendString	test_utf_8.c	/^void abAppendString(struct abuf *ab,const char *s, int len) {$/;"	f
 abFree	ghi.c	/^void abFree(struct abuf *ab) {$/;"	f
 abuf	ghi.c	/^struct abuf {$/;"	s	file:
-abuf	test_utf_8.c	/^struct abuf {$/;"	s	file:
 b	ghi.c	/^    char *b;$/;"	m	struct:abuf	file:
 chars	ghi.c	/^    char *chars;$/;"	m	struct:erow	file:
-chars	test_utf_8.c	/^    char *chars;$/;"	m	struct:abuf	file:
 coloff	ghi.c	/^    int coloff; \/\/ Col offset$/;"	m	struct:editorConfig	file:
 convertToUnicode	ghi.c	/^void convertToUnicode(struct abuf *ab, unsigned codePoint) {$/;"	f
 cx	ghi.c	/^    int cx,cy; \/\/ x,y$/;"	m	struct:editorConfig	file:
 cy	ghi.c	/^    int cx,cy; \/\/ x,y$/;"	m	struct:editorConfig	file:
 die	ghi.c	/^void die(const char *s) {$/;"	f
-die	test_utf_8.c	/^void die(const char *s) {$/;"	f
 dirty	ghi.c	/^    int dirty; \/\/ State modified a file$/;"	m	struct:editorConfig	file:
 disableRawMode	ghi.c	/^void disableRawMode() {$/;"	f
-disableRawMode	test_utf_8.c	/^void disableRawMode() {$/;"	f
 editorConfig	ghi.c	/^struct editorConfig {$/;"	s	file:
 editorDelChar	ghi.c	/^void editorDelChar() {$/;"	f
 editorDelRow	ghi.c	/^void editorDelRow(int at) {$/;"	f
@@ -77,24 +69,17 @@ editorScroll	ghi.c	/^void editorScroll() {$/;"	f
 editorSetStatusMessage	ghi.c	/^void editorSetStatusMessage(const char *fmt, ...) {$/;"	f
 editorUpdateRow	ghi.c	/^void editorUpdateRow(erow *row) {$/;"	f
 enableRawMode	ghi.c	/^void enableRawMode() {$/;"	f
-enableRawMode	test_utf_8.c	/^void enableRawMode() {$/;"	f
 erow	ghi.c	/^typedef struct erow {$/;"	s	file:
 erow	ghi.c	/^} erow;$/;"	t	typeref:struct:erow	file:
 filename	ghi.c	/^    char *filename;$/;"	m	struct:editorConfig	file:
 getCursorPosition	ghi.c	/^int getCursorPosition(int *rows, int *cols) {$/;"	f
 getWindowSize	ghi.c	/^int getWindowSize(int *rows, int *cols) {$/;"	f
 initEditor	ghi.c	/^void initEditor() {$/;"	f
-isValidChangeChars	test_utf_8.c	/^int isValidChangeChars(struct abuf *ab, int c) {$/;"	f
 len	ghi.c	/^    int len;$/;"	m	struct:abuf	file:
-len	test_utf_8.c	/^    int len;$/;"	m	struct:abuf	file:
 main	ghi.c	/^int main(int argc, char *argv[]) {$/;"	f
-main	test_utf_8.c	/^int main() {$/;"	f
 numrows	ghi.c	/^    int numrows; \/\/ number of rows display$/;"	m	struct:editorConfig	file:
 orig_terminos	ghi.c	/^    struct termios orig_terminos;    \/\/ Terminal attribute$/;"	m	struct:editorConfig	typeref:struct:editorConfig::termios	file:
-orig_terminos	test_utf_8.c	/^struct termios orig_terminos;$/;"	v	typeref:struct:termios
-removeLastChars	test_utf_8.c	/^void removeLastChars(struct abuf *ab,int len) {$/;"	f
 render	ghi.c	/^    char *render;$/;"	m	struct:erow	file:
-replaceUnicodeChars	test_utf_8.c	/^void replaceUnicodeChars(struct abuf *ab, int c) {$/;"	f
 row	ghi.c	/^    erow *row; \/\/ Support multiple line$/;"	m	struct:editorConfig	file:
 rowoff	ghi.c	/^    int rowoff; \/\/ Row offset$/;"	m	struct:editorConfig	file:
 rsize	ghi.c	/^    int rsize; \/\/ render size$/;"	m	struct:erow	file:
@@ -104,4 +89,3 @@ screenrows	ghi.c	/^    int screenrows;$/;"	m	struct:editorConfig	file:
 size	ghi.c	/^    int size;$/;"	m	struct:erow	file:
 statusmsg	ghi.c	/^    char statusmsg[80];$/;"	m	struct:editorConfig	file:
 statusmsg_time	ghi.c	/^    time_t statusmsg_time;$/;"	m	struct:editorConfig	file:
-write_utf8	test_utf_8.c	/^void write_utf8(struct abuf *ab, unsigned codePoint) {$/;"	f

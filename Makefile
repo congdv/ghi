@@ -7,3 +7,5 @@ ghi: ghi.c
 	$(CC) $(FLAGS) ghi.c -o ghi $(STD)
 debug: ghi.c
 	$(CC) $(FLAGS) ghi.c -o ghi $(STD) $(DBUG)
+clean:
+	rm -rf ghi
