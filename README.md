@@ -1,2 +1,2 @@
 # ghi
-Build text edtor from tutorial
+Build text editor from tutorial
