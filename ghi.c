@@ -417,11 +417,9 @@ void editorRowInsertChar(erow *row, int at, int c) {
     editorUpdateRow(row);
    
     // Insert unicode char
-    /*
     insertChar(row->alc,at,c);
 
     editorUpdateUnicodeRow(row);
-    */
     
     E.dirty++;//Mark changed
 
@@ -459,6 +457,7 @@ void editorInsertNewLine() {
     if (E.cx == 0) {
         editorInsertRow(E.cy,"",0);
     } else {
+        // When enter at middle of a line
         erow *row = &E.row[E.cy];
         editorInsertRow(E.cy + 1, &row->chars[E.cx],row->size - E.cx);
         // Truncate string
