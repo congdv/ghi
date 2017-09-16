@@ -46,5 +46,7 @@ achar *getBucketAt(alchars alc,int index);
 /* Delete a bucket at index*/
 void deleteBucketAt(alchars alc, int index);
 
+/* Delete buckets from a to b index*/
+void deleteBuckets(alchars,int from, int to);
 
 #endif // End UNICODE_H

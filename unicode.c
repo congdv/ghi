@@ -17,6 +17,8 @@ character
            11          | 0x0080  | 0x07FF  | 2(110)|110xxxxxx|10xxxxxxx|
            16          | 0x0800  | 0xFFFF  | 3     |1110xxxxx|10xxxxxxx|10xxxxxxx|
            21          | 0x10000 | 0x1FFFFF| 4     |11110xxxx|10xxxxxxx|10xxxxxxx|10xxxxxxx|
+
+   TODOS: Use link-list to store
    ============================================================ */
 #include "unicode.h"
 
@@ -248,4 +250,25 @@ void deleteBucketAt(alchars alc, int index) {
     free(ac->bytes);
     free(ac);
     alc->length--;
+}
+
+void deleteBuckets(alchars alc,int from, int to) {
+    int len = getLen(alc);
+    // Change suitable index
+    if(from == -1) {
+        from = 0;
+    }
+    if(to == -1 || to > len - 1) {
+        to = len - 1;
+    }
+
+    if(to < from)
+        return;
+
+    int distance = to - from;
+    int i = 0;
+    while(i <= distance) {
+        deleteBucketAt(alc,from);
+        i++;
+    }
 }

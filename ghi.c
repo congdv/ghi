@@ -350,11 +350,12 @@ void editorUpdateUnicodeRow(erow *row) {
     row->rsize = idx;
 }
 /* Insert row at with s and len of s*/
-void editorInsertRow(int at, char *s, size_t len) {
+void editorInsertRow(int at,const char *s, size_t len) {
     if(at < 0 || at > E.numrows) return;
 
     E.row = realloc(E.row, sizeof(erow) * (E.numrows + 1));
     // Move row contains chars from cursor to end currently into next row
+    /*
     memmove(&E.row[at + 1], &E.row[at], sizeof(erow) * (E.numrows - at));
 
     // row start at
@@ -365,6 +366,7 @@ void editorInsertRow(int at, char *s, size_t len) {
 
     E.row[at].rsize = 0;
     E.row[at].render=NULL;
+    */
 
     editorUpdateRow(&E.row[at]);
 
@@ -430,7 +432,7 @@ void editorRowAppendString(erow *row, char *s, size_t len) {
     memcpy(&row->chars[row->size], s, len);
     row->size += len;
     row->chars[row->size] = '\0';
-    //editorUpdateRow(row);
+    editorUpdateRow(row);
     E.dirty++;
 }
 
@@ -438,7 +440,7 @@ void editorRowDelChar(erow *row, int at) {
     if(at < 0 || at >= row->size) return;
     memmove(&row->chars[at], &row->chars[at + 1], row->size - at);
     row->size--;
-    //editorUpdateRow(row);
+    editorUpdateRow(row);
     E.dirty++;
 }
 
@@ -459,12 +461,25 @@ void editorInsertNewLine() {
     } else {
         // When enter at middle of a line
         erow *row = &E.row[E.cy];
+
+        /*
         editorInsertRow(E.cy + 1, &row->chars[E.cx],row->size - E.cx);
         // Truncate string
         row = &E.row[E.cy];
-        row->size = E.cx;
         row->chars[row->size] = '\0';
-        //editorUpdateRow(row);
+        editorUpdateRow(row);
+        */
+
+
+        // New line when enter in unicode file
+        const char * s = getStringPointer(row->alc);
+        editorInsertRow(E.cy+1, &s[E.cx],row->size - E.cx);
+
+        // Delete remaining of current line
+        deleteBuckets(row->alc,E.cx,row->size); 
+        
+        row->size = E.cx;
+        editorUpdateUnicodeRow(row);
     }
     E.cy++;
     E.cx = 0;
