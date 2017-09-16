@@ -3,9 +3,10 @@ FLAGS=-Wall -Wextra -pedantic
 STD=-std=c99
 DBUG= -g
 
+.PHONY: ghi debug clean
 ghi: ghi.c
-	$(CC) $(FLAGS) ghi.c -o ghi $(STD)
+	$(CC) $(FLAGS) ghi.c unicode.c -o ghi $(STD) $(DBUG)
 debug: ghi.c
-	$(CC) $(FLAGS) ghi.c -o ghi $(STD) $(DBUG)
+	$(CC) $(FLAGS) ghi.c unicode.c -o ghi $(STD) $(DBUG)
 clean:
 	rm -rf ghi

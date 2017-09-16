@@ -1,0 +1,9 @@
+Wikipedia là một bách khoa toàn thư mở bằng nhiều loại ngôn ngữ trên Internet. Wikipedia được viết và xây dựng do rất nhiều 
+người dùng cùng cộng tác với nhau, cho nên ai muốn thay đổi những bài viết, chỉ cần có một trình duyệt web và khả năng 
+truy cập Internet. Dự án này, nói chung, bắt đầu từ ngày 15 tháng 1 năm 2001 để bổ sung bách khoa toàn thư Nupedia bởi những nhà chuyên 
+môn; hiện nay Wikipedia trực thuộc Quỹ Hỗ trợ Wikimedia, một tổ chức phi lợi nhuận. Wikipedia hiện có hơn 15 triệu bài viết, với hơn 3,3 
+triệu bài trong phiên bản tiếng Anh (English Wikipedia); vào tháng 1 năm 2006, nó có hơn 750.000 thành viên. Từ khi nó 
+được mở cửa, Wikipedia càng ngày càng nổi tiếng[5] và sự thành công của nó đã nảy sinh ra vài dự án liên quan. Tuy nhiên, có 
+nhiều tranh luận về sự tin cậy của nó. Mặc dù vậy, một công bố vào ngày 9/8/2014 của viện thăm dò YouGov sau khi khảo sát 2.000 người 
+tại Anh cho thấy 64% số người được hỏi tin vào độ xác thực của thông tin trên Wikipedia, cao hơn tỉ lệ 61% tin vào BBC, và vào những 
+tờ báo uy tín khác như Times (45%), The Guardian (45%), The Sun (13%).

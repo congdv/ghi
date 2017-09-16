@@ -15,9 +15,6 @@
  * =====================================================================================
  */
 
-/*TODOS: Highlight syntax
- * Support vietnames code*/
-
 /* includes */
 
 /* For warning when at getline() function */
@@ -38,6 +35,8 @@
 #include <termios.h> //Enable rawmode
 #include <time.h>
 #include <unistd.h>
+
+#include "unicode.h"
 
 /*** defines ***/
 #define GHI_VERSION "0.0.1"
@@ -66,6 +65,8 @@ typedef struct erow {
     int rsize; // render size
     char *chars;
     char *render;
+    alchars alc; // Chars for store unicode character
+    alchars renderAlc;
 } erow;
 
 struct editorConfig {
@@ -316,6 +317,38 @@ void editorUpdateRow(erow *row) {
     row->rsize = idx;
 }
 
+void editorUpdateUnicodeRow(erow *row) {
+    int tabs = 0;
+    int j;
+    for(j = 0; j < row->size;j++) {
+        achar *ac = getBucketAt(row->alc,j);
+        if(ac->length == 1 && ac->bytes[0] == '\t') {
+            tabs++;
+        }
+    }
+    // Free old render to render new string
+    
+    freeChars(row->renderAlc);
+    row->renderAlc = newChar();
+
+    int idx = 0;
+    for(j = 0; j < row->size; j++) {
+        achar *ac = getBucketAt(row->alc,j);
+        // Replace tab character with spaces
+        if(ac->length == 1 && ac->bytes[0] == '\t') {
+            appendNewChar(row->renderAlc,' ');
+            idx++;
+            while(idx % GHI_TAB_STOP != 0) {
+                appendNewChar(row->renderAlc,' ');
+                idx++;
+            }
+        } else {
+            appendNewStringWithLen(row->renderAlc,ac->bytes,ac->length);
+            idx++;
+        }
+    }
+    row->rsize = idx;
+}
 /* Insert row at with s and len of s*/
 void editorInsertRow(int at, char *s, size_t len) {
     if(at < 0 || at > E.numrows) return;
@@ -332,7 +365,20 @@ void editorInsertRow(int at, char *s, size_t len) {
 
     E.row[at].rsize = 0;
     E.row[at].render=NULL;
+
     editorUpdateRow(&E.row[at]);
+
+    // Initalize row append unicode character
+    E.row[at].alc = newChar();
+    appendNewStringWithLen(E.row[at].alc,s,len);
+
+    E.row[at].size = getLen(E.row[at].alc);
+
+    E.row[at].rsize = 0;
+
+    E.row[at].renderAlc=newChar();
+
+    editorUpdateUnicodeRow(&E.row[at]);
 
     E.numrows++;
     E.dirty++;
@@ -355,40 +401,28 @@ void editorDelRow(int at) {
 void editorRowInsertChar(erow *row, int at, int c) {
     if(at < 0 || at > row->size) at = row->size;
 
-
-
     // Shift left from this cursor characte with the rest line characters
     // to next character index position
     // row->size - at + 1, the rest line with current character
     // When append chars
-    if(row->size - at == 0 && at > 0 && row->chars[at-1] == 'e' && c == 'e') {
-        struct abuf ab = ABUF_INIT;
-        convertToUnicode(&ab,0x00EA);
-        row->chars = realloc(row->chars, row->size + ab.len);
-        // Remove previous character
-        memmove(&row->chars[at+ab.len - 1], &row->chars[at], row->size - at + 1);
-        row->size++;
+    
+    row->chars = realloc(row->chars, row->size + 2);
+    memmove(&row->chars[at+1], &row->chars[at], row->size - at + 1);
+    row->size++;
 
-        // Copy buffer to row chars inserted
-        int i;
-        at--;
-        for(i = 0; i < ab.len; i++){
-            row->chars[at + i] = ab.b[i];
-        }
-        editorUpdateRow(row);
-
-        abFree(&ab);
-    }else {
-        row->chars = realloc(row->chars, row->size + 2);
-        memmove(&row->chars[at+1], &row->chars[at], row->size - at + 1);
-        row->size++;
-
-        // Copy buffer to row chars inserted
-        row->chars[at] = c;
+    // Copy buffer to row chars inserted
+    row->chars[at] = c;
 
 
-        editorUpdateRow(row);
-    }
+    editorUpdateRow(row);
+   
+    // Insert unicode char
+    /*
+    insertChar(row->alc,at,c);
+
+    editorUpdateUnicodeRow(row);
+    */
+    
     E.dirty++;//Mark changed
 
 }
@@ -398,7 +432,7 @@ void editorRowAppendString(erow *row, char *s, size_t len) {
     memcpy(&row->chars[row->size], s, len);
     row->size += len;
     row->chars[row->size] = '\0';
-    editorUpdateRow(row);
+    //editorUpdateRow(row);
     E.dirty++;
 }
 
@@ -406,7 +440,7 @@ void editorRowDelChar(erow *row, int at) {
     if(at < 0 || at >= row->size) return;
     memmove(&row->chars[at], &row->chars[at + 1], row->size - at);
     row->size--;
-    editorUpdateRow(row);
+    //editorUpdateRow(row);
     E.dirty++;
 }
 
@@ -431,7 +465,7 @@ void editorInsertNewLine() {
         row = &E.row[E.cy];
         row->size = E.cx;
         row->chars[row->size] = '\0';
-        editorUpdateRow(row);
+        //editorUpdateRow(row);
     }
     E.cy++;
     E.cx = 0;
@@ -645,6 +679,7 @@ void editorDrawRows(struct abuf *ab) {
             }
 
         } else {
+            /*
             int len = E.row[filerow].rsize - E.coloff;
             if (len < 0) len = 0;
             if(len > E.screencols) len = E.screencols;
@@ -659,8 +694,18 @@ void editorDrawRows(struct abuf *ab) {
                     abAppend(ab,&c[j],1);
                 }
             }
-            // subtracting to display from column offset
-            //abAppend(ab, &E.row[filerow].render[E.coloff],len);
+            */
+
+            /*Render unicode*/
+            alchars alc = E.row[filerow].renderAlc;
+            int len = getLen(alc) - E.coloff;
+            if(len < 0) len = 0;
+            if(len > E.screencols) len = E.screencols;
+            int j;
+            for(j = 0; j < len; j++) {
+                achar *ac = getBucketAt(alc,j);
+                abAppend(ab,ac->bytes,ac->length);
+            }
         }
         abAppend(ab,"\x1b[K",3);// Clear a line before add line to display out
         abAppend(ab,"\r\n",2);
