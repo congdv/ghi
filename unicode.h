@@ -11,13 +11,13 @@ typedef struct achar achar;
 struct achar {
     char *bytes;
     int length;
+    achar *next;
+    achar *previous;
 };
 
 typedef struct alchars *alchars; // Definition to itselft
 
 alchars newChar();
-/* Create new char*/
-alchars createNewChar(unsigned c);
 /* Add new char*/
 void appendNewChar(alchars alc,unsigned c);
 
@@ -33,6 +33,8 @@ void freeChars(alchars alc);
 
 /* Get string */
 const char *getStringPointer(alchars alc);
+
+char *getString(alchars alc);
 
 /* Get string length*/
 int getStringLen(const char *s);

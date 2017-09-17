@@ -30,8 +30,11 @@ character
 
 
 struct alchars {
-    achar **chars;
+    achar *head;
+    int currentAt;
     int length;
+    achar *tail;
+    achar *currentBucket;
 };
 
 typedef struct buffers {
@@ -120,13 +123,20 @@ void encode(struct alchars *alc,const char *s, int numByte) {
 
 /* Append a utf-8 char*/
 void appendNewChar(alchars alc,unsigned c){
-    achar **newAlloc = realloc(alc->chars, (alc->length + 1)*sizeof(achar *));
-    if(newAlloc == NULL)
-       return;
+    achar *ac = decode(c);
+    if(alc->head == NULL) {
+        alc->tail = alc->head = ac;
+        ac->previous = ac->next = NULL;
+        alc->currentBucket = alc->head;
+    }else {
+        ac->previous = alc->tail;
+        ac->next = NULL;
 
-    newAlloc[alc->length] = decode(c);
+        alc->tail->next = ac;
+        alc->tail = ac;
+
+    }
     alc->length++;
-    alc->chars = newAlloc;
 }
 
 
@@ -148,110 +158,148 @@ void bufFree(buffers *buf) {
 
 alchars newChar(void) {
     alchars alc = malloc(sizeof(struct alchars));
-    alc->chars = NULL;
+    alc->head = alc->tail = NULL;
     alc->length = 0;
-    return alc;
-}
-/* Create new char*/
-alchars createNewChar(unsigned c) {
-    alchars alc = malloc(sizeof(struct alchars));
-    alc->length = 0;
-    alc->chars = NULL;
-    appendNewChar(alc,c);
+    alc->currentAt = 0;
+    alc->currentBucket = alc->head;
     return alc;
 }
 
-void freeAlchars(alchars alc) {
-    if(alc != NULL) {
-        achar ** chars = alc->chars;
-        for(int i = 0; i < alc->length; i++) {
-            if(chars[i]) {
-                free(chars[i]->bytes);
-                free(chars[i]);
-            }
-        }
-        free(chars);
-        free(alc);
-    }
-}
-/* Free chars*/
-void freeChars(alchars alc) {
-    freeAlchars(alc);
-    bufFree(&bf);
-}
 
-/* Get string */
-const char *getStringPointer(alchars alc) {
-    refreshBuffers();
-    achar ** chars = alc->chars;
-    for(int i = 0; i < alc->length; i++) {
-        bufAppend(&bf,chars[i]->bytes,chars[i]->length);
-    }
-    bufAppend(&bf,"\0",1);
-    return bf.s;
-}
-
-
-int getStringLen(const char *s) {
-    alchars alc = newChar();
-    encode(alc,s,strlen(s));
-    int len = alc->length;
-    freeAlchars(alc);
-    return len;
-}
-int getLen(alchars alc) {
-    return alc->length;
-}
-/* Add new string */
-void appendNewString(alchars alc,const char *s) {
-    encode(alc,s,strlen(s));
-}
-
-void appendNewStringWithLen(alchars alc,const char *s,int len) {
-    encode(alc,s,len);
-}
 achar *getBucketAt(alchars alc,int index) {
-    if(index < 0 && index >= alc->length)
+    if(index >= alc->length)
         return NULL;
-    // Get value of bucket
-    return alc->chars[index];
+    if(index == 0) {
+        alc->currentAt = 0;
+        alc->currentBucket = alc->head;
+        return alc->head;
+    }
+    if(alc->currentAt == index) {
+        return alc->currentBucket;
+    } else if(alc->currentAt < index) {
+        while(alc->currentAt < index) {
+            alc->currentBucket = alc->currentBucket->next;
+            alc->currentAt++;
+        }
+        return alc->currentBucket;
+    } else {
+        while(alc->currentAt > index) {
+            alc->currentBucket = alc->currentBucket->previous;
+            alc->currentAt--;
+        }
+        return alc->currentBucket;
+
+    }
 }
 
 void insertChar(alchars alc, int at,unsigned c) {
-    if(at < 0 && at > alc->length)
-        return;
-    // Extend 1 bucket
-    alc->chars  = realloc(alc->chars, (alc->length + 1)*(sizeof(achar *)));
-    
-    // Shift right bytes pointer to 
-    for(int i = alc->length; i > at; i--) {
-       alc->chars[i] = alc->chars[i-1]; 
-    }
 
-    // Set index of bucket
-    alc->chars[at] = decode(c);
+    achar *ac = decode(c);
+    // Insert into head of list
+    if(at <= 0) {
+        ac->next = alc->head;
+        ac->previous = NULL;
+
+        alc->head->previous = ac;
+        alc->head = ac;
+
+        alc->currentAt++;
+    }
+    // Insert into tail of list
+    else if(at >= alc->length) {
+        ac->previous = alc->tail;
+        ac->next = NULL;
+
+        alc->tail->next = ac;
+        alc->tail = ac;
+    } else {
+       achar *temp = getBucketAt(alc,at); 
+       achar *prevTemp = temp->previous;
+
+       // Connect previous bucket
+       ac->previous = prevTemp;
+       prevTemp->next = ac;
+
+       // Connect to current bucket
+       ac->next = temp;
+       temp->previous = ac;
+    }
     alc->length++;
 
 }
 
+void freeAchar(achar *ac) {
+    free(ac->bytes);
+    free(ac);
+}
 
+void freeAllBucket(alchars alc) {
+    while(alc->tail) {
+        achar *temp = alc->tail;
+        alc->tail = alc->tail->previous;
+        freeAchar(temp);
+    }
+}
+void freeChars(alchars alc) {
+    freeAllBucket(alc);
+    free(alc);
+}
 void deleteBucketAt(alchars alc, int index) {
     if(index < 0 && index >= alc->length) 
         return;
 
-    achar *ac = alc->chars[index]; 
+    if(index == 0) {
+        achar *temp = alc->head;
+        alc->head = temp->next;
+        alc->head->previous = NULL;
+        freeAchar(temp);
 
-    // Shift left bytes pointer to 
-    for(int i = index; i < alc->length - 1; i++) {
-       alc->chars[i] = alc->chars[i+1]; 
+        if(alc->currentAt == 0) {
+            alc->currentBucket = alc->head;
+        } else {
+            alc->currentAt--;
+        }
+    } else if(index == alc->length - 1) {
+        achar *temp = alc->tail;
+        alc->tail = temp->previous;
+        alc->tail->next = NULL;
+        freeAchar(temp);
+
+        if(alc->currentAt == alc->length - 1) {
+            alc->currentAt--;
+            alc->currentBucket = alc->tail;
+        }
+    } else {
+        achar *temp = getBucketAt(alc,index); 
+
+        achar *prevTemp = temp->previous;
+        achar *nextTemp = temp->next;
+
+        nextTemp->previous = prevTemp;
+        prevTemp->next = nextTemp;
+
+        alc->currentBucket = nextTemp;
+
+        freeAchar(temp);
     }
 
-    // Free bucket index
-    free(ac->bytes);
-    free(ac);
     alc->length--;
+    if(alc->length == 0) {
+        alc->currentAt = 0;
+        alc->currentBucket = NULL;
+        alc->head = NULL;
+        alc->tail = NULL;
+    } 
 }
 
+void deleteFromBucketTo(achar *fromBucket, achar *toBucket) {
+    while(fromBucket != toBucket)  {
+        achar *temp = fromBucket;
+        fromBucket = fromBucket->next;
+        freeAchar(temp);
+    }
+    freeAchar(toBucket);
+}
 void deleteBuckets(alchars alc,int from, int to) {
     int len = getLen(alc);
     // Change suitable index
@@ -265,10 +313,104 @@ void deleteBuckets(alchars alc,int from, int to) {
     if(to < from)
         return;
 
-    int distance = to - from;
-    int i = 0;
-    while(i <= distance) {
-        deleteBucketAt(alc,from);
-        i++;
+    // Check if delete all buckets
+    if(from == 0 && to == len - 1) {
+        freeAllBucket(alc);
+        alc->tail = alc->head = NULL;
+        alc->currentAt = 0;
+        alc->currentBucket = NULL;
+        alc->length = 0;
+        return;
     }
+
+    // Head segment
+    if(from == 0) {
+        achar *toBucket = getBucketAt(alc,to);
+        achar *nextToBucket = toBucket->next;
+        deleteFromBucketTo(alc->head,toBucket);
+        alc->head = nextToBucket;
+        alc->head->previous = NULL;
+
+        // Refresh current index
+        if(alc->currentAt > to) {
+            alc->currentAt -= (to - from + 1);
+        } else {
+            alc->currentAt = 0;
+            alc->currentBucket = alc->head;
+        }
+
+    } else if (to == len - 1) {
+        achar *fromBucket = getBucketAt(alc,from);
+        achar *previousFromBucket = fromBucket->previous;
+        previousFromBucket->next = NULL;
+
+        deleteFromBucketTo(fromBucket,alc->tail);
+        alc->tail = previousFromBucket;
+
+        // Refresh current index
+        if(alc->currentAt > from) {
+            alc->currentAt = from - 1;
+        } else {
+            alc->currentBucket = alc->tail;
+        }
+
+    } else {
+        achar *fromBucket = getBucketAt(alc,from);
+        achar *toBucket = getBucketAt(alc,to);
+
+        // Delete buckets
+        achar *previousFromBucket = fromBucket->previous;
+        achar *nextToBucket = toBucket->next;
+        
+        previousFromBucket->next = nextToBucket;
+        nextToBucket->previous = previousFromBucket;
+
+        deleteFromBucketTo(fromBucket,toBucket);
+        if(alc->currentAt > to) {
+            alc->currentAt -= (to - from + 1);
+        } else if(alc->currentAt >= from && alc->currentAt <= to) {
+            alc->currentAt = from -  1;
+            alc->currentBucket = previousFromBucket;
+        }
+    }
+    
+    alc->length -= (to - from + 1);
+
+}
+char *getString(alchars alc) {
+    char *str = malloc(sizeof(char)); 
+    int len = 0;
+    achar *temp = alc->head;
+    while(temp) {
+        str= realloc(str,len + temp->length);
+        memcpy(&str[len],temp->bytes,temp->length);
+
+        len+=temp->length;
+
+        temp = temp->next;
+    }
+    str= realloc(str,len + 1);
+    str[len] = '\0';
+    return str;
+}
+
+int getLen(alchars alc) {
+    return alc->length;
+}
+
+/* Add new string */
+void appendNewString(alchars alc,const char *s) {
+    encode(alc,s,strlen(s));
+}
+
+void appendNewStringWithLen(alchars alc,const char *s,int len) {
+    encode(alc,s,len);
+}
+int getStringLen(const char *s) {
+    alchars alc = newChar();
+    encode(alc,s,strlen(s));
+    int len = alc->length;
+
+    freeChars(alc);
+    return len;
 }
