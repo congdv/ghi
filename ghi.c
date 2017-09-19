@@ -420,11 +420,9 @@ void editorRowInsertChar(erow *row, int at, int c) {
     editorUpdateRow(row);
    
     // Insert unicode char
-    /*
     insertChar(row->alc,at,c);
 
     editorUpdateUnicodeRow(row);
-    */
     
     E.dirty++;//Mark changed
 

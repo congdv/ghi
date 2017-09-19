@@ -1,2 +1,5 @@
 TODOS:
-- Add ghi can read utf-8 characters
+[x] Add ghi can read utf-8 characters
+[x]  Insert character
+[]  Delete character
+[]  Unikey engine (Ghi Engine)
