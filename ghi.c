@@ -441,7 +441,12 @@ void editorRowDelChar(erow *row, int at) {
     if(at < 0 || at >= row->size) return;
     memmove(&row->chars[at], &row->chars[at + 1], row->size - at);
     row->size--;
-    //editorUpdateRow(row);
+    editorUpdateRow(row);
+
+    // For unicode char
+    alchars alc = row->alc;
+    deleteBucketAt(alc,at);
+    editorUpdateUnicodeRow(row);
     E.dirty++;
 }
 
