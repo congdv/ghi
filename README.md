@@ -21,6 +21,6 @@ Ctrl-F - Find
 ```
 
 ## TODOS:
-[ ] Support open UTF-8 file
-[ ] Support type vietnamese format on texteditor
+[] Support open UTF-8 file
+[] Support type vietnamese format on texteditor
 
