@@ -2,3 +2,4 @@
 *.swp
 tags
 ghi
+.ycm_extra_conf.py
